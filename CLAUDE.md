@@ -55,7 +55,7 @@ Acemi yaklaşım: `UPDATE Users SET Balance = Balance - 100` — bu YASAK, çün
 
 | # | Faz | Konu | Durum |
 |---|-----|------|-------|
-| 1 | Mimari Tasarım | DB şeması: Accounts, LedgerEntries, Transactions, IdempotencyLogs | ⏳ Bekliyor |
+| 1 | Mimari Tasarım | DB şeması: Accounts, LedgerEntries, Transactions, IdempotencyLogs | ✅ Tamamlandı |
 | 2 | C# Proje Kurulumu | .NET Core Web API, EF Core & PostgreSQL bağlantısı | ⏳ Bekliyor |
 | 3 | Core Ledger Engine | Double-Entry mantığı, atomik Debit/Credit transaction | ⏳ Bekliyor |
 | 4 | Idempotency Middleware | Custom header kontrolcüsü + Redis/DB caching | ⏳ Bekliyor |
@@ -75,7 +75,34 @@ Acemi yaklaşım: `UPDATE Users SET Balance = Balance - 100` — bu YASAK, çün
 - **Repo**: https://github.com/muhammedcanyigit/CoreLedger.FraudShield.git
 - **Yerel path**: /Users/canyigit/Desktop/CoreLedger.FraudShield
 
+## Veritabanı Şeması (Faz 1 — Tamamlandı)
+
+Şema dosyası: `database/schema.sql` (PostgreSQL DDL)
+
+5 tablo tasarlandı (roadmap'teki 4 tabloya ek olarak **balance_snapshots**
+performans/cache tablosu eklendi):
+
+- **accounts** — hesap kimlik bilgisi, bakiye sütunu YOK
+- **transactions** — transferin üst kaydı, fraud_score ve fraud_checked_at alanları dahil
+- **ledger_entries** — immutable debit/credit kayıtları (sistemin kalbi)
+- **balance_snapshots** — performans için dondurulmuş bakiye anları (SUM'u
+  baştan hesaplamamak için: son snapshot + sonraki entry'ler)
+- **idempotency_logs** — Idempotency-Key ile mükerrer işlem engelleme
+
+Sıradaki adım: Faz 2 — .NET Core Web API projesinin kurulumu, EF Core &
+PostgreSQL bağlantısı (bu şemayı EF Core entity/migration'larına dönüştürmek).
+
 ## İlerleme Günlüğü
+
+### 2026-09-24
+- Faz 1 tamamlandı: `database/schema.sql` oluşturuldu (5 tablo, ENUM tipleri,
+  index'ler, CHECK constraint'leri).
+- Balance snapshot/cache kavramı kullanıcıya öğretildi ve şemaya
+  `balance_snapshots` tablosu olarak eklendi.
+- Para birimi için `NUMERIC(18,2)` (decimal) kullanılmasına karar verildi,
+  float/double kullanılmadı (yuvarlama hatası riski).
+- Kullanıcı teknik terimlere aşina değil — bundan sonra yeni terim
+  geçtiğinde açıklama yapılacak (standart yaklaşım).
 
 ### 2026-09-21
 - Proje vizyonu ve teknik mimari kullanıcı tarafından detaylıca anlatıldı.
