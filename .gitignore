@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Rider / VS
+.vs/
+.idea/
+*.suo
+
+# macOS
+.DS_Store
+
+# Python (ileride Faz 5'te eklenecek servis icin)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Ortam / secrets
+.env

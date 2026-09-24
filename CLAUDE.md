@@ -56,7 +56,7 @@ Acemi yaklaşım: `UPDATE Users SET Balance = Balance - 100` — bu YASAK, çün
 | # | Faz | Konu | Durum |
 |---|-----|------|-------|
 | 1 | Mimari Tasarım | DB şeması: Accounts, LedgerEntries, Transactions, IdempotencyLogs | ✅ Tamamlandı |
-| 2 | C# Proje Kurulumu | .NET Core Web API, EF Core & PostgreSQL bağlantısı | ⏳ Bekliyor |
+| 2 | C# Proje Kurulumu | .NET Core Web API, EF Core & PostgreSQL bağlantısı | ✅ Tamamlandı |
 | 3 | Core Ledger Engine | Double-Entry mantığı, atomik Debit/Credit transaction | ⏳ Bekliyor |
 | 4 | Idempotency Middleware | Custom header kontrolcüsü + Redis/DB caching | ⏳ Bekliyor |
 | 5 | Python AI Servisi | FastAPI kurulumu, Isolation Forest/XGBoost eğitimi | ⏳ Bekliyor |
@@ -64,6 +64,22 @@ Acemi yaklaşım: `UPDATE Users SET Balance = Balance - 100` — bu YASAK, çün
 | 7 | Fraud Pipeline Entegrasyonu | Transfer akışına AI bloklama mekanizması | ⏳ Bekliyor |
 | 8 | Containerization | Docker Compose: C#, Python, PostgreSQL, Redis | ⏳ Bekliyor |
 | 9 | Test & Benchmark | Idempotency/Fraud test senaryoları, xUnit/Postman | ⏳ Bekliyor |
+
+## Detaylı Değişiklik Günlüğü
+
+Her fazda tam olarak ne yapıldığı, hangi dosyaların oluşturulduğu ve neden o
+kararların alındığı için bkz. **`PROGRESS.md`** — bu dosya (CLAUDE.md) genel
+rehber, `PROGRESS.md` ise faz faz ayrıntılı günlük.
+
+## Proje Yapısı (Faz 2 sonrası)
+
+```
+CoreLedger.sln
+database/schema.sql              — tasarım referansı (gerçek şema artık EF Core migration'larından üretiliyor)
+src/CoreLedger.Domain/           — entity'ler + enum'lar, dış pakete bağımlı değil
+src/CoreLedger.Infrastructure/   — DbContext, EF Core konfigürasyonları, migration'lar
+src/CoreLedger.Api/              — ASP.NET Core Web API (controller tabanlı, Swagger aktif)
+```
 
 ## Kurallar / Sabit Talimatlar
 
@@ -94,6 +110,8 @@ PostgreSQL bağlantısı (bu şemayı EF Core entity/migration'larına dönüşt
 
 ## İlerleme Günlüğü
 
+(Ayrıntılı sürüm için bkz. `PROGRESS.md`)
+
 ### 2026-09-24
 - Faz 1 tamamlandı: `database/schema.sql` oluşturuldu (5 tablo, ENUM tipleri,
   index'ler, CHECK constraint'leri).
@@ -111,5 +129,10 @@ PostgreSQL bağlantısı (bu şemayı EF Core entity/migration'larına dönüşt
   kullanılıyordu, CoreLedger.FraudShield klasörü bu repo'nun kökü değildi.
   Klasör boştu, temiz şekilde silinip doğru GitHub reposundan
   (muhammedcanyigit/CoreLedger.FraudShield) klonlandı.
-- CLAUDE.md oluşturuldu, proje henüz kod aşamasına geçmedi (1. faz: DB şeması
-  tasarımı bekliyor).
+- CLAUDE.md oluşturuldu.
+- Faz 1 tamamlandı: `database/schema.sql` yazıldı (5 tablo: accounts,
+  transactions, ledger_entries, balance_snapshots, idempotency_logs).
+- Faz 2 tamamlandı: .NET 8 Web API çözümü kuruldu (Domain/Infrastructure/Api
+  katmanları), EF Core + PostgreSQL bağlantısı yapıldı, migration üretildi ve
+  derleme/çalışma testleri geçti. `PROGRESS.md` oluşturuldu (faz faz ayrıntılı
+  günlük).

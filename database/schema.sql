@@ -7,21 +7,17 @@
 --   2) Her hareket immutable iki satir olarak LedgerEntries'e yazilir
 --   3) Idempotency ve Fraud denetimi icin gerekli alanlar hazirdir
 
+-- NOT: Bu dosya artik gercek semanin "kaynagi" degil, okunabilir tasarim
+-- referansidir. Gercek sema Faz 2'de EF Core migration'lari ile uretilir
+-- (src/CoreLedger.Infrastructure/Persistence/Migrations). Ikisi senkron tutulur.
+--
+-- Enum alanlari icin native PostgreSQL ENUM yerine VARCHAR + CHECK constraint
+-- tercih edildi. Neden: native ENUM'a sonradan yeni deger eklemek (ALTER TYPE
+-- ... ADD VALUE) PostgreSQL'de transaction icinde calismaz ve deployment'lari
+-- zorlastirir. VARCHAR + CHECK ise tek satirlik bir ALTER TABLE ile guncellenir.
+
 -- UUID uretimi icin gerekli extension
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
--- ---------------------------------------------------------
--- ENUM Tipleri
--- ---------------------------------------------------------
-
--- Bir LedgerEntry'nin yonu: hesaptan mi cikiyor (debit), hesaba mi giriyor (credit)
-CREATE TYPE ledger_direction AS ENUM ('debit', 'credit');
-
--- Bir Transaction'in yasam dongusu durumu
-CREATE TYPE transaction_status AS ENUM ('pending', 'completed', 'failed', 'blocked');
-
--- Transaction tipi (ileride genisleyebilir: fee, refund vs.)
-CREATE TYPE transaction_type AS ENUM ('transfer', 'deposit', 'withdrawal');
 
 
 -- ---------------------------------------------------------
@@ -46,8 +42,10 @@ CREATE INDEX idx_accounts_owner_user_id ON accounts(owner_user_id);
 -- ---------------------------------------------------------
 CREATE TABLE transactions (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    type                transaction_type NOT NULL,
-    status              transaction_status NOT NULL DEFAULT 'pending',
+    type                VARCHAR(20) NOT NULL
+                            CHECK (type IN ('Transfer', 'Deposit', 'Withdrawal')),
+    status              VARCHAR(20) NOT NULL DEFAULT 'Pending'
+                            CHECK (status IN ('Pending', 'Completed', 'Failed', 'Blocked')),
     description         TEXT,
 
     -- AI Fraud Shield sonucu — audit trail icin saklanir, asla silinmez
@@ -68,7 +66,8 @@ CREATE TABLE ledger_entries (
     transaction_id  UUID NOT NULL REFERENCES transactions(id),
     account_id      UUID NOT NULL REFERENCES accounts(id),
 
-    direction       ledger_direction NOT NULL,     -- 'debit' veya 'credit'
+    direction       VARCHAR(10) NOT NULL
+                        CHECK (direction IN ('Debit', 'Credit')),
     amount          NUMERIC(18,2) NOT NULL CHECK (amount > 0), -- her zaman pozitif, yonu direction belirler
     currency        CHAR(3) NOT NULL,
 
